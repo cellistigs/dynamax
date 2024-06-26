@@ -159,13 +159,14 @@ class LinearGaussianSSM(SSM):
                 weights=ParameterProperties(),
                 bias=ParameterProperties(),
                 input_weights=ParameterProperties(),
-                cov=ParameterProperties(constrainer=RealToPSDBijector())),
+                cov=ParameterProperties(constrainer=RealToPSDBijector(),trainable=False)),
             emissions=ParamsLGSSMEmissions(
                 weights=ParameterProperties(),
                 bias=ParameterProperties(),
                 input_weights=ParameterProperties(),
-                cov=ParameterProperties(constrainer=RealToPSDBijector()))
+                cov=ParameterProperties(constrainer=RealToPSDBijector(),trainable=False))
             )
+        print("no trainable covariances listed.")
         return params, props
 
     def initial_distribution(
@@ -490,6 +491,11 @@ class LinearGaussianConjugateSSM(LinearGaussianSSM):
         H = HD[:, :self.state_dim]
         D, d = (HD[:, self.state_dim:-1], HD[:, -1]) if self.has_emissions_bias \
             else (HD[:, self.state_dim:], jnp.zeros(self.emission_dim))
+        ## If we don't want trainable covariances:
+        if props.dynamics.cov.trainable is False:
+            Q= params.dynamics.cov
+        if props.emissions.cov.trainable is False:    
+            R= params.emissions.cov
 
         params = ParamsLGSSM(
             initial=ParamsLGSSMInitial(mean=m, cov=S),
