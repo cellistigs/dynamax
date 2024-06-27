@@ -164,9 +164,9 @@ class LinearGaussianSSM(SSM):
                 weights=ParameterProperties(),
                 bias=ParameterProperties(),
                 input_weights=ParameterProperties(),
-                cov=ParameterProperties(constrainer=RealToPSDBijector(),trainable=False))
+                cov=ParameterProperties(constrainer=RealToPSDBijector(),trainable=True))
             )
-        print("no trainable covariances listed.")
+        print("dynamics cov non-trainable, emissions cov diagonal.")
         return params, props
 
     def initial_distribution(
@@ -496,6 +496,8 @@ class LinearGaussianConjugateSSM(LinearGaussianSSM):
             Q= params.dynamics.cov
         if props.emissions.cov.trainable is False:    
             R= params.emissions.cov
+        else:    
+            R = jnp.diag(jnp.diag(R))
 
         params = ParamsLGSSM(
             initial=ParamsLGSSMInitial(mean=m, cov=S),
