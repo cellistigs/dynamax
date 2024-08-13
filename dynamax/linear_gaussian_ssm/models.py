@@ -491,13 +491,20 @@ class LinearGaussianConjugateSSM(LinearGaussianSSM):
         H = HD[:, :self.state_dim]
         D, d = (HD[:, self.state_dim:-1], HD[:, -1]) if self.has_emissions_bias \
             else (HD[:, self.state_dim:], jnp.zeros(self.emission_dim))
+
         ## If we don't want trainable covariances:
         if props.dynamics.cov.trainable is False:
             Q= params.dynamics.cov
+
         if props.emissions.cov.trainable is False:    
             R= params.emissions.cov
+        ## Restrict R to only update diagonal (updates work out in this case)
         else:    
             R = jnp.diag(jnp.diag(R))
+            #R= params.emissions.cov
+        ## Block input weight updates.     
+        D = params.emissions.input_weights
+            
 
         params = ParamsLGSSM(
             initial=ParamsLGSSMInitial(mean=m, cov=S),
